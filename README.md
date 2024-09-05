@@ -271,7 +271,7 @@ throw(1)
 
 - Recommendation:
 
-Check the throw values.
+Do not use `0` or `1` as throw values.
 
 ### Read/Write correct type data
 
