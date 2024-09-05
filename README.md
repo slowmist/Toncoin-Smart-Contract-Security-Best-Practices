@@ -50,8 +50,8 @@ The attacker could find that `authorize` function was not `impure`. The absence 
 
 Always check functions for `impure`modifier.
 
-```bash
-() authorize (sender) **impure** inline {
+```fc
+() authorize (sender) impure inline {
   throw_unless(187, equal_slice_bits(sender, addr1) | equal_slice_bits(sender, addr2));
 }
 ```
@@ -71,14 +71,14 @@ Always check functions for `impure`modifier.
 
 Always check for modifying/non-modifying methods.
 
-```bash
+```fc
 (cell, slice, int) udict_delete_get?(cell dict, int key_len, int index) asm(index dict key_len) "DICTUDELGET" "NULLSWAPIFNOT";
 (cell, (slice, int)) ~udict_delete_get?(cell dict, int key_len, int index) asm(index dict key_len) "DICTUDELGET" "NULLSWAPIFNOT";
 ```
 
 Modifying method (`~`) calls may take some arguments and return some values, but they modify their first argument, that is, assign the first component of the returned value to the variable from the first argument.
 
-```bash
+```fc
 (_, int found?) = accounts~udict_delete_get?(256, sender);
 if(found) {
 		;; accounts has been changed
@@ -111,7 +111,7 @@ Voting power was stored in message as an integer. So the attacker could send a n
 
 - Recommendation:
 
-Unsigned integer will throw an error if overflow occurs, use signed integers if you really need it.
+Signed integers are safer because they will error out if an overflow occurs, and signed integers are only used when they are really needed.
 
 ### Un-secure random number
 
@@ -138,7 +138,7 @@ if(rand(10000) == 7777) { ...send reward... }
 
 - Recommendation:
 
-Always randomize seed before doing [**`rand()`](https://docs.ton.org/develop/func/stdlib#rand), a better suggestion is never use on chain randomness, the validators has ways to control or affect the seed.**
+Always randomize seed before doing `rand()`, a better suggestion is never use on chain randomness, the validators has ways to control or affect the seed.
 
 ### Send private data on chain
 
@@ -160,13 +160,13 @@ Do not send private data on chain.
 - Severity: High
 - Description:
 
-Vault does not have a bounce handler or proxy message to the database if the user sends “check”. In the database we can set `msg_addr_none` as an award address because `load_msg_address` allows it. We are requesting a check from the vault, database tries to parse `msg_addr_none` using [**`parse_std_addr`**](https://docs.ton.org/develop/func/stdlib#parse_std_addr), and fails. Message bounces to the vault from the database and op is not `op_not_winner`.
+Vault does not have a bounce handler or proxy message to the database if the user sends “check”. In the database we can set `msg_addr_none` as an award address because `load_msg_address` allows it. We are requesting a check from the vault, database tries to parse `msg_addr_none` using `parse_std_addr`, and fails. Message bounces to the vault from the database and op is not `op_not_winner`.
 
 - Exploit Scenario:
 
 The vault has the following code in the database message handler:
 
-```bash
+```fc
 int op = in_msg_body~load_op();
 
 int mode = null();
@@ -183,24 +183,14 @@ if (op == op_not_winner) {
 
 Always check for bounced messages. Don't forget about errors caused by standard functions. Make your conditions as strict as possible.
 
-```bash
+```fc
 slice in_msg_full_slice = in_msg_full.begin_parse();
 int msg_flags = in_msg_full_slice~load_msg_flags();
 if (msg_flags & 1) { ;; is bounced
     on_bounce(in_msg_body);
     return ();
 }
-
-int op = in_msg_body~load_op();
-
-int mode = null();
-if (op == op_not_winner) {
-    mode = 64; ;; Refund remaining check-TONs
-               ;; addr_hash corresponds to check requester
-} else {
-     mode = 128; ;; Award the prize
-                 ;; addr_hash corresponds to the withdrawal address from the winning entry
-}
+;; other logic
 ```
 
 ### Risk of destroy account under race conditions
@@ -227,7 +217,7 @@ There is no way to safe execute a third-party code in the contract, because out 
 
 - Exploit Scenario:
 
-```bash
+```fc
 slice try_execute(int image, (int -> slice) dehasher) asm "<{ TRY:<{ EXECUTE DEPTH 2 THROWIFNOT }>CATCH<{ 2DROP NULL }> }>CONT"   "2 1 CALLXARGS";
 
 slice safe_execute(int image, (int -> slice) dehasher) inline {
@@ -272,7 +262,7 @@ Each time the TVM execution stops normally, it stops with exit codes `0` or `1`.
 
 - Exploit Scenario:
 
-```bash
+```fc
 ;;..
 throw(0)
 ;;..
@@ -306,6 +296,9 @@ It is crucial to keep track of what the code does and what it may return. Keep i
 TON fully implements the actor model, it means the code of the contract can be changed. It can either be changed permanently, using `SETCODE` TVM directive, or in runtime, setting the TVM code registry to a new cell value until the end of execution.
 
 - Exploit Scenario:
+
+An unscrupulous developer could maliciously update the code to steal money.
+
 - Recommendation:
 
 Notice that the code of contracts can be updated.
@@ -334,7 +327,7 @@ Contracts in the blockchain can reside in separate shards, processed by other se
 
 - Exploit Scenario:
 
-```bash
+```fc
   send_raw_message(msg.end_cell(), mode);
 ```
 
@@ -351,7 +344,7 @@ They can be either set explicitly `"method_id(5)"`, or implicitly by a func comp
 
 - Exploit Scenario:
 
-```bash
+```fc
 () recv_internal(int msg_value, cell in_msg_cell, slice in_msg) impure {
 }
 
@@ -365,7 +358,7 @@ recv_internal/recv_external are predefined.
 
 ### Handle bounced messages
 
-- Severity: Medium
+- Severity: High
 - Description:
 
 You may receive bounced messages (error notifications), which should be handled.
@@ -380,14 +373,14 @@ Check if the bounced flag was sent receiving internal messages.
 
 ### TON addresses may have three representations
 
-- Severity: Info
+- Severity: Medium
 - Description:
 
 TON addresses may have three representations. A full representation can either be "raw" (`workchain:address`) or "user-friendly". The last one is the one users encounter most often. It contains a tag byte, indicating whether the address is `bounceable` or `not bounceable`, and a workchain id byte. This information should be noted.
 
 - Exploit Scenario:
 
-```bash
+```fc
 Raw address:
 0:b4c1b2ede12aa76f4a44353944258bcc8f99e9c7c474711a152c78b43218e296
 
@@ -404,14 +397,14 @@ Check if an address is on a correct chain `force_chain(to_address);`.
 
 ### Use bounce-able message
 
-- Severity: Medium
+- Severity: High
 - Description:
 
 TON blockchain is asynchronous. That means the messages do not have to arrive successively. e.g. when a fail notification of an action arrives, it should be handled properly.
 
 - Exploit Scenario:
 
-```bash
+```fc
 var msg = begin_cell()
     .store_uint(0x10, 6) ;; nobounceed no bounced msg return
     .store_slice(to_address)
@@ -428,14 +421,14 @@ Always use bounce-able message `0x18` in case the message fails.
 
 ### Replay protection
 
-- Severity: Medium
+- Severity: High
 - Description:
 
 There are two custom solutions for wallets (smart contracts, storing users money): `seqno-based` (check the counter not to process message twice) and `high-load` (storing processes identifiers and its expirations).
 
 - Exploit Scenario:
 
-```bash
+```fc
   var ds = get_data().begin_parse();
   var (stored_seqno, stored_subwallet, public_key, plugins) = (ds~load_uint(32), ds~load_uint(32), ds~load_uint(256), ds~load_dict());
   ds.end_parse();
@@ -453,7 +446,7 @@ Write replay protection for external messages.
 
 ### Man-in-the-Middle
 
-- Severity: Medium
+- Severity: High
 - Description:
 
 A message cascade can be processed over many blocks. Assume that while one message flow is running, an attacker can initiate a second one in parallel. That is, if a property was checked at the beginning (e.g. whether the user has enough tokens), do not assume that at the third stage in the same contract they will still satisfy this property.
@@ -465,7 +458,7 @@ Expect a Man-in-the-Middle of the Message Flow
 
 ### Use a carry-value pattern
 
-- Severity: Medium
+- Severity: High
 - Description:
 
 In the same TON Jetton, this is demonstrated: `sender_wallet` subtracts the balance and sends it with an `op::internal_transfer` message to `destination_wallet`, and it, in turn, receives the balance with the message and adds it to its own balance (or bounces it back).
@@ -480,7 +473,7 @@ Expect a Man-in-the-Middle of the Message Flow.
 
 ### Return gas excesses carefully
 
-- Severity: Medium
+- Severity: High
 - Description:
 
 If excess gas is not returned to the sender, the funds will accumulate in your contracts over time. In principle, nothing terrible, this is just suboptimal practice. You can add a function for raking out excesses, but popular contracts like TON Jetton still return to the sender with the message `op::excesses`.
@@ -502,7 +495,7 @@ Functions always return values or errors, it will cause logical fatal if you mis
 
 - Exploit Scenario:
 
-```bash
+```fc
 dictinfos~udict_delete?(32, index);
 ;;..
 ```
@@ -520,7 +513,7 @@ Jetton token are combine of two parts: jetton-minter and jetton-wallet, if the v
 
 - Exploit Scenario:
 
-```bash
+```fc
 if (op == op::internal_transfer) {
     deposit_for_sender(in_msg_body, sender_address, my_ton_balance, msg_value);
     return ();
