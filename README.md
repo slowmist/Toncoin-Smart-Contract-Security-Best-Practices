@@ -465,11 +465,11 @@ In the same TON Jetton, this is demonstrated: `sender_wallet` subtracts the bala
 
 - Exploit Scenario:
 
-And here is an example of incorrect implementation. Why can't you find out your Jetton balance on-chain? Because such a question does not fit the pattern. By the time the response to the `op::get_balance` message reaches the requester, this balance could already have been spent by someone.
+Why can't you find out your Jetton balance on-chain? Because such a question does not fit the pattern. By the time the response to the `op::get_balance` message reaches the requester, this balance could already have been spent by someone.
 
 - Recommendation:
 
-Expect a Man-in-the-Middle of the Message Flow.
+Use a carry-value pattern.
 
 ### Return gas excesses carefully
 
