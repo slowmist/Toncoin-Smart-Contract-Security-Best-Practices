@@ -2,13 +2,42 @@
 
 ![https://img.shields.io/twitter/url/https/twitter.com/slowmist_team.svg?style=social&label=Follow%20%40SlowMist_Team](https://img.shields.io/twitter/url/https/twitter.com/slowmist_team.svg?style=social&label=Follow%20%40SlowMist_Team)
 
+- [Toncoin Smart Contract Security Best Practices](#toncoin-smart-contract-security-best-practices)
+  * [Common Pitfalls of Toncoin Smart Contracts:](#common-pitfalls-of-toncoin-smart-contracts-)
+    + [Lack of impure modifier](#lack-of-impure-modifier)
+    + [Incorrect use of modifying/non-modifying methods](#incorrect-use-of-modifying-non-modifying-methods)
+    + [Incorrect use of signed/unsigned integer](#incorrect-use-of-signed-unsigned-integer)
+    + [Un-secure random number](#un-secure-random-number)
+    + [Send private data on chain](#send-private-data-on-chain)
+    + [Missing check for bounced messages](#missing-check-for-bounced-messages)
+    + [Risk of destroy account under race conditions](#risk-of-destroy-account-under-race-conditions)
+    + [Avoid executing third-party code](#avoid-executing-third-party-code)
+    + [Name collision](#name-collision)
+    + [Check the throw values](#check-the-throw-values)
+    + [Read/Write correct type data](#read-write-correct-type-data)
+    + [Code of contracts can be updated](#code-of-contracts-can-be-updated)
+    + [Transaction and phases](#transaction-and-phases)
+    + [Cannot pull data from other contracts](#cannot-pull-data-from-other-contracts)
+    + [Two predefined medhod_id](#two-predefined-medhod-id)
+    + [Handle bounced messages](#handle-bounced-messages)
+    + [TON addresses may have three representations](#ton-addresses-may-have-three-representations)
+    + [Use bounce-able message](#use-bounce-able-message)
+    + [Replay protection](#replay-protection)
+    + [Man-in-the-Middle](#man-in-the-middle)
+    + [Use a carry-value pattern](#use-a-carry-value-pattern)
+    + [Return gas excesses carefully](#return-gas-excesses-carefully)
+    + [Check function return values](#check-function-return-values)
+    + [Check fake Jetton tokens](#check-fake-jetton-tokens)
+  * [Reference](#reference)
+
+
 ## Common Pitfalls of Toncoin Smart Contracts:
 
 ### Lack of impure modifier
 
 - Severity: High
 - Description:
-The attacker could find that `authorize` function was not `impure`. The absence of this modifier allows a compiler to skip calls to that function if it returns nothing or the return value is unused.
+The attacker could find that `authorize` function was not `impure`. The absence of this modifier allows a compiler to skip calls to that function if it returns nothing or the return value is unused.
 - Exploit Scenario:
 
 ```rust
@@ -19,7 +48,7 @@ The attacker could find that `authorize` function was not `impure`. The absen
 
 - Recommendation:
 
-Always check functions for [**`impure`**](https://docs.ton.org/develop/func/functions#impure-specifier) modifier.
+Always check functions for `impure`modifier.
 
 ```bash
 () authorize (sender) **impure** inline {
@@ -31,7 +60,7 @@ Always check functions for [**`impure`**](https://docs.ton.org/develop/func/fun
 
 - Severity: High
 - Description:
-`udict_delete_get?` was called with `.` instead `~`, so the real dict was untouched.
+`udict_delete_get?` was called with `.` instead `~`, so the real dict was untouched.
 - Exploit Scenario:
 
 ```rust
@@ -109,7 +138,7 @@ if(rand(10000) == 7777) { ...send reward... }
 
 - Recommendation:
 
-Always randomize seed before doing [**`rand()`](https://docs.ton.org/develop/func/stdlib#rand), a better suggestion is never use on chain randomness, the validators has ways to control or affect the seed.**
+Always randomize seed before doing [**`rand()`](https://docs.ton.org/develop/func/stdlib#rand), a better suggestion is never use on chain randomness, the validators has ways to control or affect the seed.**
 
 ### Send private data on chain
 
@@ -131,11 +160,11 @@ Do not send private data on chain.
 - Severity: High
 - Description:
 
-Vault does not have a bounce handler or proxy message to the database if the user sends “check”. In the database we can set `msg_addr_none` as an award address because `load_msg_address` allows it. We are requesting a check from the vault, database tries to parse `msg_addr_none` using [**`parse_std_addr`**](https://docs.ton.org/develop/func/stdlib#parse_std_addr), and fails. Message bounces to the vault from the database and op is not `op_not_winner`.
+Vault does not have a bounce handler or proxy message to the database if the user sends “check”. In the database we can set `msg_addr_none` as an award address because `load_msg_address` allows it. We are requesting a check from the vault, database tries to parse `msg_addr_none` using [**`parse_std_addr`**](https://docs.ton.org/develop/func/stdlib#parse_std_addr), and fails. Message bounces to the vault from the database and op is not `op_not_winner`.
 
 - Exploit Scenario:
 
-The vault has the following code in the database message handler:
+The vault has the following code in the database message handler:
 
 ```bash
 int op = in_msg_body~load_op();
@@ -228,18 +257,18 @@ Func variables and functions may contain almost any legit character.
 
 - Exploit Scenario:
 
-`var++`, `~bits`, `foo-bar+baz` including commas`,` are valid variables and functions names.
+`var++`, `~bits`, `foo-bar+baz` including commas`,` are valid variables and functions names.
 
 - Recommendation:
 
 When writing and inspecting a Func code, Linter should be used.
 
-### **Check the throw values**
+### Check the throw values
 
 - Severity: Medium
 - Description:
 
-Each time the TVM execution stops normally, it stops with exit codes `0` or `1`. Although it is done automatically, TVM execution can be interrupted directly in an unexpected way if exit codes `0` and `1` are thrown directly by either `throw(0)` or `throw(1)` command.
+Each time the TVM execution stops normally, it stops with exit codes `0` or `1`. Although it is done automatically, TVM execution can be interrupted directly in an unexpected way if exit codes `0` and `1` are thrown directly by either `throw(0)` or `throw(1)` command.
 
 - Exploit Scenario:
 
@@ -274,7 +303,7 @@ It is crucial to keep track of what the code does and what it may return. Keep i
 - Severity: Medium
 - Description:
 
-TON fully implements the actor model, it means the code of the contract can be changed. It can either be changed permanently, using `SETCODE` TVM directive, or in runtime, setting the TVM code registry to a new cell value until the end of execution.
+TON fully implements the actor model, it means the code of the contract can be changed. It can either be changed permanently, using `SETCODE` TVM directive, or in runtime, setting the TVM code registry to a new cell value until the end of execution.
 
 - Exploit Scenario:
 - Recommendation:
@@ -313,12 +342,12 @@ Contracts in the blockchain can reside in separate shards, processed by other se
 
 Cannot pull data from other contracts.
 
-### **Two predefined medhod_id**
+### Two predefined medhod_id
 
 - Severity: Medium
 - Description:
 
-They can be either set explicitly `"method_id(5)"`, or implicitly by a func compiler. In this case, they can be found among methods declarations in the .fift assembly file. Two of them are predefined: one for receiving messages inside of blockchain `(0)`, commonly named `recv_internal`, and one for receiving messages from outside `(-1)`, `recv_external`.
+They can be either set explicitly `"method_id(5)"`, or implicitly by a func compiler. In this case, they can be found among methods declarations in the .fift assembly file. Two of them are predefined: one for receiving messages inside of blockchain `(0)`, commonly named `recv_internal`, and one for receiving messages from outside `(-1)`, `recv_external`.
 
 - Exploit Scenario:
 
@@ -349,12 +378,12 @@ Smart contracts addresses in TON blockchain are deterministic and can be precomp
 
 Check if the bounced flag was sent receiving internal messages.
 
-### **TON addresses may have three representations**
+### TON addresses may have three representations
 
 - Severity: Info
 - Description:
 
-TON addresses may have three representations. A full representation can either be "raw" (`workchain:address`) or "user-friendly". The last one is the one users encounter most often. It contains a tag byte, indicating whether the address is `bounceable` or `not bounceable`, and a workchain id byte. This information should be noted.
+TON addresses may have three representations. A full representation can either be "raw" (`workchain:address`) or "user-friendly". The last one is the one users encounter most often. It contains a tag byte, indicating whether the address is `bounceable` or `not bounceable`, and a workchain id byte. This information should be noted.
 
 - Exploit Scenario:
 
@@ -402,7 +431,7 @@ Always use bounce-able message `0x18` in case the message fails.
 - Severity: Medium
 - Description:
 
-There are two custom solutions for wallets (smart contracts, storing users money): `seqno-based` (check the counter not to process message twice) and `high-load` (storing processes identifiers and its expirations).
+There are two custom solutions for wallets (smart contracts, storing users money): `seqno-based` (check the counter not to process message twice) and `high-load` (storing processes identifiers and its expirations).
 
 - Exploit Scenario:
 
@@ -434,27 +463,27 @@ A message cascade can be processed over many blocks. Assume that while one messa
 
 Expect a Man-in-the-Middle of the Message Flow
 
-### **Use a carry-value pattern**
+### Use a carry-value pattern
 
 - Severity: Medium
 - Description:
 
-In the same TON Jetton, this is demonstrated: `sender_wallet` subtracts the balance and sends it with an `op::internal_transfer` message to `destination_wallet`, and it, in turn, receives the balance with the message and adds it to its own balance (or bounces it back).
+In the same TON Jetton, this is demonstrated: `sender_wallet` subtracts the balance and sends it with an `op::internal_transfer` message to `destination_wallet`, and it, in turn, receives the balance with the message and adds it to its own balance (or bounces it back).
 
 - Exploit Scenario:
 
-And here is an example of incorrect implementation. Why can't you find out your Jetton balance on-chain? Because such a question does not fit the pattern. By the time the response to the `op::get_balance` message reaches the requester, this balance could already have been spent by someone.
+And here is an example of incorrect implementation. Why can't you find out your Jetton balance on-chain? Because such a question does not fit the pattern. By the time the response to the `op::get_balance` message reaches the requester, this balance could already have been spent by someone.
 
 - Recommendation:
 
 Expect a Man-in-the-Middle of the Message Flow.
 
-### **Return gas excesses carefully**
+### Return gas excesses carefully
 
 - Severity: Medium
 - Description:
 
-If excess gas is not returned to the sender, the funds will accumulate in your contracts over time. In principle, nothing terrible, this is just suboptimal practice. You can add a function for raking out excesses, but popular contracts like TON Jetton still return to the sender with the message `op::excesses`.
+If excess gas is not returned to the sender, the funds will accumulate in your contracts over time. In principle, nothing terrible, this is just suboptimal practice. You can add a function for raking out excesses, but popular contracts like TON Jetton still return to the sender with the message `op::excesses`.
 
 - Exploit Scenario:
 
@@ -462,7 +491,7 @@ If the value of the contract balance runs out, the transaction will be partially
 
 - Recommendation:
 
-When using the `send_raw_message` function, it is important to select the appropriate mode and flag combination for your needs. 
+When using the `send_raw_message` function, it is important to select the appropriate mode and flag combination for your needs. 
 
 ### Check function return values
 
