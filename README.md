@@ -444,7 +444,7 @@ There are two custom solutions for wallets (smart contracts, storing users money
 
 Write replay protection for external messages.
 
-### Man-in-the-Middle
+### Race condition of messages
 
 - Severity: High
 - Description:
