@@ -2,34 +2,35 @@
 
 ![https://img.shields.io/twitter/url/https/twitter.com/slowmist_team.svg?style=social&label=Follow%20%40SlowMist_Team](https://img.shields.io/twitter/url/https/twitter.com/slowmist_team.svg?style=social&label=Follow%20%40SlowMist_Team)
 
-- [Toncoin Smart Contract Security Best Practices](#toncoin-smart-contract-security-best-practices)
-  * [Common Pitfalls of Toncoin Smart Contracts:](#common-pitfalls-of-toncoin-smart-contracts-)
-    + [Lack of impure modifier](#lack-of-impure-modifier)
-    + [Incorrect use of modifying/non-modifying methods](#incorrect-use-of-modifying-non-modifying-methods)
-    + [Incorrect use of signed/unsigned integer](#incorrect-use-of-signed-unsigned-integer)
-    + [Un-secure random number](#un-secure-random-number)
-    + [Send private data on chain](#send-private-data-on-chain)
-    + [Missing check for bounced messages](#missing-check-for-bounced-messages)
-    + [Risk of destroy account under race conditions](#risk-of-destroy-account-under-race-conditions)
-    + [Avoid executing third-party code](#avoid-executing-third-party-code)
-    + [Name collision](#name-collision)
-    + [Check the throw values](#check-the-throw-values)
-    + [Read/Write correct type data](#read-write-correct-type-data)
-    + [Code of contracts can be updated](#code-of-contracts-can-be-updated)
-    + [Transaction and phases](#transaction-and-phases)
-    + [Cannot pull data from other contracts](#cannot-pull-data-from-other-contracts)
-    + [Two predefined medhod_id](#two-predefined-medhod-id)
-    + [Handle bounced messages](#handle-bounced-messages)
-    + [TON addresses may have three representations](#ton-addresses-may-have-three-representations)
-    + [Use bounce-able message](#use-bounce-able-message)
-    + [Replay protection](#replay-protection)
-    + [Man-in-the-Middle](#man-in-the-middle)
-    + [Use a carry-value pattern](#use-a-carry-value-pattern)
-    + [Return gas excesses carefully](#return-gas-excesses-carefully)
-    + [Check function return values](#check-function-return-values)
-    + [Check fake Jetton tokens](#check-fake-jetton-tokens)
-  * [Reference](#reference)
+[中文版本](./README_CN.md)
 
+- [Toncoin Smart Contract Security Best Practices](#toncoin-smart-contract-security-best-practices)
+  - [Common Pitfalls of Toncoin Smart Contracts:](#common-pitfalls-of-toncoin-smart-contracts)
+    - [Lack of impure modifier](#lack-of-impure-modifier)
+    - [Incorrect use of modifying/non-modifying methods](#incorrect-use-of-modifyingnon-modifying-methods)
+    - [Incorrect use of signed/unsigned integer](#incorrect-use-of-signedunsigned-integer)
+    - [Un-secure random number](#un-secure-random-number)
+    - [Send private data on chain](#send-private-data-on-chain)
+    - [Missing check for bounced messages](#missing-check-for-bounced-messages)
+    - [Risk of destroy account under race conditions](#risk-of-destroy-account-under-race-conditions)
+    - [Avoid executing third-party code](#avoid-executing-third-party-code)
+    - [Name collision](#name-collision)
+    - [Check the throw values](#check-the-throw-values)
+    - [Read/Write correct type data](#readwrite-correct-type-data)
+    - [Code of contracts can be updated](#code-of-contracts-can-be-updated)
+    - [Transaction and phases](#transaction-and-phases)
+    - [Cannot pull data from other contracts](#cannot-pull-data-from-other-contracts)
+    - [Two predefined medhod\_id](#two-predefined-medhod_id)
+    - [Handle bounced messages](#handle-bounced-messages)
+    - [TON addresses may have three representations](#ton-addresses-may-have-three-representations)
+    - [Use bounce-able message](#use-bounce-able-message)
+    - [Replay protection](#replay-protection)
+    - [Race condition of messages](#race-condition-of-messages)
+    - [Use a carry-value pattern](#use-a-carry-value-pattern)
+    - [Return gas excesses carefully](#return-gas-excesses-carefully)
+    - [Check function return values](#check-function-return-values)
+    - [Check fake Jetton tokens](#check-fake-jetton-tokens)
+  - [Reference](#reference)
 
 ## Common Pitfalls of Toncoin Smart Contracts:
 
@@ -37,7 +38,7 @@
 
 - Severity: High
 - Description:
-The attacker could find that `authorize` function was not `impure`. The absence of this modifier allows a compiler to skip calls to that function if it returns nothing or the return value is unused.
+  The attacker could find that `authorize` function was not `impure`. The absence of this modifier allows a compiler to skip calls to that function if it returns nothing or the return value is unused.
 - Exploit Scenario:
 
 ```rust
@@ -60,7 +61,7 @@ Always check functions for `impure`modifier.
 
 - Severity: High
 - Description:
-`udict_delete_get?` was called with `.` instead `~`, so the real dict was untouched.
+  `udict_delete_get?` was called with `.` instead `~`, so the real dict was untouched.
 - Exploit Scenario:
 
 ```rust
@@ -81,7 +82,7 @@ Modifying method (`~`) calls may take some arguments and return some values, but
 ```fc
 (_, int found?) = accounts~udict_delete_get?(256, sender);
 if(found) {
-		;; accounts has been changed
+        ;; accounts has been changed
 }
 ```
 
@@ -89,7 +90,7 @@ if(found) {
 
 - Severity: High
 - Description:
-Voting power was stored in message as an integer. So the attacker could send a negative value during power transfer and get infinite voting power.
+  Voting power was stored in message as an integer. So the attacker could send a negative value during power transfer and get infinite voting power.
 - Exploit Scenario:
 
 ```rust
@@ -117,7 +118,7 @@ Signed integers are safer because they will error out if an overflow occurs, and
 
 - Severity: High
 - Description:
-Seed was brought from logical time of the transaction, and a hacker can win by bruteforcing the logical time in the current block (cause lt is sequential in the borders of one block).
+  Seed was brought from logical time of the transaction, and a hacker can win by bruteforcing the logical time in the current block (cause lt is sequential in the borders of one block).
 - Exploit Scenario:
 
 ```rust
@@ -504,6 +505,11 @@ dictinfos~udict_delete?(32, index);
 
 Always check function return values.
 
+```
+int success = dictinfos~udict_delete?(32, index);
+throw_unless(err::fail_to_delete_dict, success);
+```
+
 ### Check fake Jetton tokens
 
 - Severity: High
@@ -526,14 +532,14 @@ Check if sender send fake jetton token by calculate user jetton wallet address.
 
 ## Reference
 
-https://dev.to/dvlkv/drawing-conclusions-from-ton-hack-challenge-1aep
+[1]. https://dev.to/dvlkv/drawing-conclusions-from-ton-hack-challenge-1aep
 
-https://docs.ton.org/develop/smart-contracts/security/ton-hack-challenge-1
+[2]. https://docs.ton.org/develop/smart-contracts/security/ton-hack-challenge-1
 
-https://docs.ton.org/learn/tvm-instructions/tvm-overview
+[3]. https://docs.ton.org/learn/tvm-instructions/tvm-overview
 
-https://docs.ton.org/develop/smart-contracts/messages
+[4]. https://docs.ton.org/develop/smart-contracts/messages
 
-https://docs.ton.org/develop/smart-contracts/security/secure-programming
+[5]. https://docs.ton.org/develop/smart-contracts/security/secure-programming
 
-https://docs.ton.org/develop/smart-contracts/security/things-to-focus
+[6]. https://docs.ton.org/develop/smart-contracts/security/things-to-focus
