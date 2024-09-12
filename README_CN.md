@@ -566,14 +566,16 @@ UQC0wbLt4Sqnb0pENTlEJYvMj5npx8R0cRoVLHi0Mhjilh4S
 
 ## 参考
 
-[1]. https://dev.to/dvlkv/drawing-conclusions-from-ton-hack-challenge-1aep
+[1]. https://github.com/ton-blockchain/hack-challenge-1
 
-[2]. https://docs.ton.org/develop/smart-contracts/security/ton-hack-challenge-1
+[2]. https://dev.to/dvlkv/drawing-conclusions-from-ton-hack-challenge-1aep
 
-[3]. https://docs.ton.org/learn/tvm-instructions/tvm-overview
+[3]. https://docs.ton.org/develop/smart-contracts/security/ton-hack-challenge-1
 
-[4]. https://docs.ton.org/develop/smart-contracts/messages
+[4]. https://docs.ton.org/learn/tvm-instructions/tvm-overview
 
-[5]. https://docs.ton.org/develop/smart-contracts/security/secure-programming
+[5]. https://docs.ton.org/develop/smart-contracts/messages
 
-[6]. https://docs.ton.org/develop/smart-contracts/security/things-to-focus
+[6]. https://docs.ton.org/develop/smart-contracts/security/secure-programming
+
+[7]. https://docs.ton.org/develop/smart-contracts/security/things-to-focus
