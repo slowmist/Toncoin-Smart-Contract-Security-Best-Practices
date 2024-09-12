@@ -202,8 +202,85 @@ if (msg_flags & 1) { ;; is bounced
 Never destroy account for fun.
 
 - Exploit Scenario:
+```
+() recv_internal (msg_value, in_msg_full, in_msg_body) {
+    if (in_msg_body.slice_empty?()) { ;; ignore empty messages
+        return ();
+    }
+    slice cs = in_msg_full.begin_parse();
+    int flags = cs~load_uint(4);
 
-There were race conditions in the contract: you could deposit money, then try to withdraw it twice in concurrent messages. There is no guarantee that a message with reserved money will be processed, so the bank can shut down after a second withdrawal. After that, the contract could be redeployed and anybody could withdraw unclaimed money.
+    if (flags & 1) { ;; ignore all bounced messages
+        return ();
+    }
+    slice sender_address = cs~load_msg_addr();
+    if (equal_slice_bits(sender_address, my_address())) {
+        ;; money reserve
+        return ();
+    }
+    
+
+
+    (int wc, int sender) = parse_std_addr(sender_address);
+    throw_unless(99, wc == 0);
+    
+    int op = in_msg_body~load_uint(32);
+    int query_id = in_msg_body~load_uint(64);
+    
+    load_data();
+    cell accounts' = accounts;
+
+    if( op == 0 ) { ;; Deposit
+      int fee = 10000000;
+      int balance = max(msg_value - fee, 0);
+      total_balance = total_balance + balance;
+      (_, slice old_balance_slice, int found?) = accounts'.udict_delete_get?(256, sender);
+      if(found?) {
+        balance += old_balance_slice~load_coins();
+      }
+      accounts'~udict_set_builder(256, sender, begin_cell().store_coins(balance));
+    }
+    if (op == 1) { ;; Withdraw
+      int withdraw_fee = 10000000;
+      (accounts', slice old_balance_slice, int found?) = accounts'.udict_delete_get?(256, sender);
+      throw_unless(98, found?);
+      int balance = old_balance_slice~load_coins();
+      int withdraw_amount = in_msg_body~load_coins() + withdraw_fee;
+      throw_unless(100, balance >= withdraw_amount);
+      balance -= withdraw_amount;
+      total_balance = total_balance - withdraw_amount;
+      if(balance > 0 ) {
+        accounts'~udict_set_builder(256, sender, begin_cell().store_coins(balance));
+      }
+      
+      ;; To be sure nobody steal funds - first send it to ourselves
+      var storage_fee = 100000000;
+      var msg = begin_cell()
+        .store_uint(0x18, 6)
+        .store_slice(my_address())
+        .store_coins(total_balance + storage_fee)
+        .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+      .end_cell();
+      send_raw_message(msg, 2);      
+      
+      int mode = 2 | 128;
+      if(get_balance().pair_first() < withdraw_amount) { ;; all money withdrawn, shutdown bank
+        mode |= 32;
+      }
+      ;; everything else can be sent to user
+      var msg = begin_cell()
+        .store_uint(0x18, 6)
+        .store_slice(sender_address)
+        .store_coins(0)
+        .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+      .end_cell();
+      send_raw_message(msg, mode);
+    }
+    accounts = accounts';
+    save_data();
+}
+```
+There were race condition in the contract: you can deposit money, then try to withdraw two times in concurrent messages. There is no guarantee that message with reserved money will be processed, so bank can shutdown after second withdrawal. After that the contract could be redeployed and then anybody can withdraw unowned money.
 
 - Recommendation:
 
