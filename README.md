@@ -608,15 +608,16 @@ if (op == op::internal_transfer) {
 Check if sender send fake jetton token by calculate user jetton wallet address.
 
 ## Reference
+[1]. https://github.com/ton-blockchain/hack-challenge-1
 
-[1]. https://dev.to/dvlkv/drawing-conclusions-from-ton-hack-challenge-1aep
+[2]. https://dev.to/dvlkv/drawing-conclusions-from-ton-hack-challenge-1aep
 
-[2]. https://docs.ton.org/develop/smart-contracts/security/ton-hack-challenge-1
+[3]. https://docs.ton.org/develop/smart-contracts/security/ton-hack-challenge-1
 
-[3]. https://docs.ton.org/learn/tvm-instructions/tvm-overview
+[4]. https://docs.ton.org/learn/tvm-instructions/tvm-overview
 
-[4]. https://docs.ton.org/develop/smart-contracts/messages
+[5]. https://docs.ton.org/develop/smart-contracts/messages
 
-[5]. https://docs.ton.org/develop/smart-contracts/security/secure-programming
+[6]. https://docs.ton.org/develop/smart-contracts/security/secure-programming
 
-[6]. https://docs.ton.org/develop/smart-contracts/security/things-to-focus
+[7]. https://docs.ton.org/develop/smart-contracts/security/things-to-focus
