@@ -112,7 +112,7 @@ if(found) {
 
 - Recommendation:
 
-Signed integers are safer because they will error out if an overflow occurs, and signed integers are only used when they are really needed.
+Unsigned integers are safer because they will error out if an overflow occurs, and signed integers are only used when they are really needed.
 
 ### Un-secure random number
 
